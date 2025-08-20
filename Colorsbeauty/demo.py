@@ -9,7 +9,7 @@ if sys.platform.startswith('win'):
 from Image import Image
 
 if __name__ == "__main__":
-    img = Image("picture/2.jpg")
+    img = Image("D://AIGC/Colorsbeauty/picture/img.jpg")
 
 
     # 分析色彩和谐度

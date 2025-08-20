@@ -121,7 +121,7 @@ class Image:
 
     def analyze_color_harmony(self):
         """
-        基于色相环分析色彩和谐度（优化版本）
+        基于色相环分析色彩和谐度（只对最大两个主色判断互补和分裂互补）
         """
         main_colors = self.main_colors[:5] if self.main_colors else []
         
@@ -132,6 +132,10 @@ class Image:
         colors_array = np.array(main_colors, dtype=np.uint8).reshape(-1, 1, 3)
         hsv_colors = cv2.cvtColor(colors_array, cv2.COLOR_BGR2HSV)[:, 0, 0]
         
+        # 调试信息
+        # print(f"主色数量: {len(main_colors)}")
+        # print(f"色相值: {hsv_colors}")
+        
         # 预计算所有色相对
         n_colors = len(hsv_colors)
         if n_colors < 2:
@@ -139,7 +143,7 @@ class Image:
         
         # 使用numpy向量化计算
         hue_diffs = np.abs(hsv_colors[:, None] - hsv_colors[None, :])
-        # 处理色相环循环性
+        # 对于OpenCV HSV，色相范围是0-179，需要正确处理循环性
         hue_diffs = np.minimum(hue_diffs, 180 - hue_diffs)
         
         # 只取上三角矩阵（避免重复计算）
@@ -149,39 +153,70 @@ class Image:
         if not np.any(valid_pairs):
             return 0.5
         
-        # 向量化和谐度计算
-        harmony_scores = np.zeros_like(upper_triangle, dtype=np.float32)
+        # 获取所有有效的色相差值
+        valid_diffs = upper_triangle[valid_pairs]
+        # print(f"色相差值: {valid_diffs}")
         
-        # 单色和谐 (0° ± 15°)
-        mask = (upper_triangle <= 15) & valid_pairs
-        harmony_scores[mask] = 1.0 - (upper_triangle[mask] / 15.0)
+        # 获取主色占比信息
+        color_percentages = self.color_percentages[:5] if self.color_percentages else []
+        # print(f"主色占比: {color_percentages}")
         
-        # 类似色和谐 (30° ± 15°)
-        mask = (upper_triangle > 15) & (upper_triangle <= 45) & valid_pairs
-        harmony_scores[mask] = 1.0 - np.abs(upper_triangle[mask] - 30) / 15.0
+        # 找到占比最大的两个主色的索引
+        if len(color_percentages) >= 2:
+            # 获取前5个主色的占比
+            top5_percentages = color_percentages[:5]
+            # 找到占比最大的两个主色的索引
+            top2_indices = np.argsort(top5_percentages)[-2:]
+            # print(f"占比最大的两个主色索引: {top2_indices}")
+            
+            # 计算这两个主色之间的色相差值
+            if len(top2_indices) == 2:
+                i, j = min(top2_indices), max(top2_indices)
+                top2_diff = hue_diffs[i, j]
+                # print(f"最大两个主色的色相差值: {top2_diff}")
         
-        # 分裂互补色和谐 (60° ± 15°)
-        mask = (upper_triangle > 45) & (upper_triangle <= 75) & valid_pairs
-        harmony_scores[mask] = 1.0 - np.abs(upper_triangle[mask] - 60) / 15.0
+        # 直接计算和谐度分数，不使用复杂的索引
+        harmony_scores_list = []
         
-        # 三角色和谐 (120° ± 20°)
-        mask = (upper_triangle >= 100) & (upper_triangle <= 140) & valid_pairs
-        harmony_scores[mask] = 1.0 - np.abs(upper_triangle[mask] - 120) / 20.0
-        
-        # 互补色和谐 (180° ± 20°)
-        mask = (upper_triangle >= 160) & (upper_triangle <= 180) & valid_pairs
-        harmony_scores[mask] = 1.0 - np.abs(upper_triangle[mask] - 180) / 20.0
-        
-        # 其他情况的基础分数
-        other_mask = valid_pairs & (harmony_scores == 0)
-        if np.any(other_mask):
-            other_diffs = upper_triangle[other_mask]
-            other_scores = np.where(other_diffs <= 30, 0.3,np.where(other_diffs <= 60, 0.2,np.where(other_diffs <= 120, 0.1, 0.05)))
-            harmony_scores[other_mask] = other_scores
+        # 使用平滑的和谐度函数
+        for diff in valid_diffs:
+            # 单色和谐 (0°附近，正负10°范围内)
+            if 0 <= diff <= 10:
+                normalized_diff = float(abs(int(diff)) / 5.0)  # 使用5.0作为分母，使衰减适中
+                score = np.exp(-normalized_diff * normalized_diff)
+                harmony_scores_list.append(score)
+                # print(f"单色和谐: diff={diff}, score={score}")
+            
+            # 类似色和谐 (30°附近，正负10°范围内)
+            elif 20 <= diff <= 40:
+                normalized_diff = float(abs(int(diff) - 30) / 5.0)
+                score = 0.8 * np.exp(-normalized_diff * normalized_diff)
+                harmony_scores_list.append(score)
+                # print(f"类似色和谐: diff={diff}, score={score}")
+            
+            # 只对占比最大的两个主色判断分裂互补和互补色和谐
+            # 分裂互补色和谐 (60°附近，正负10°范围内)
+            elif 50 <= diff <= 70 and len(color_percentages) >= 2:
+                # 检查是否是占比最大的两个主色之间的差异
+                if len(top2_indices) == 2 and abs(diff - top2_diff) < 0.1:  # 允许小的浮点误差
+                    normalized_diff = float(abs(int(diff) - 60) / 5.0)
+                    score = 0.6 * np.exp(-normalized_diff * normalized_diff)
+                    harmony_scores_list.append(score)
+                    # print(f"分裂互补色和谐: diff={diff}, score={score}")
+            
+            # 互补色和谐 (90°附近，正负10°范围内)
+            elif 80 <= diff <= 90 and len(color_percentages) >= 2:
+                # 检查是否是占比最大的两个主色之间的差异
+                if len(top2_indices) == 2 and abs(int(diff) - top2_diff) < 0.1:  # 允许小的浮点误差
+                    normalized_diff = float(abs(diff - 90) / 5.0)
+                    score = 0.3 * np.exp(-normalized_diff * normalized_diff)
+                    harmony_scores_list.append(score)
+                    # print(f"互补色和谐: diff={diff}, score={score}")
         
         # 计算平均和谐度
-        valid_scores = harmony_scores[valid_pairs]
-        avg_harmony = np.mean(valid_scores) if len(valid_scores) > 0 else 0.5
+        # print(f"所有和谐度分数: {harmony_scores_list}")
+        avg_harmony = np.mean(harmony_scores_list) if len(harmony_scores_list) > 0 else 0.5
+        # print(f"平均和谐度: {avg_harmony}")
         
         return min(1.0, max(0.0, avg_harmony))
 
