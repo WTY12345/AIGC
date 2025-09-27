@@ -10,16 +10,16 @@ class Image:
         self._extract_main_colors_once()
     
     def _extract_main_colors_once(self):
-        """Ԥ������ɫ��ֻ����һ��"""
+        """预提取主要颜色，只执行一次"""
         if self.image is not None:
             self.main_colors, self.color_percentages = self.extract_main_colors_octree(max_colors=8, show=False)
 
     def extract_main_colors_octree(self, max_colors=8, show=False):
         """
-        ʹ�ð˲����㷨��ȡ��Ҫ��ɫ
-        :param max_colors: �����ɫ����
-        :param show: �Ƿ���ʾ��ɫ��
-        :return: ��ɫRGB�б�����ռ��
+        使用八叉树算法提取主要颜色
+        :param max_colors: 最大颜色数量
+        :param show: 是否显示颜色
+        :return: 颜色RGB列表和占比
         """
         img = self.image.copy()
         
@@ -102,7 +102,7 @@ class Image:
         leaves = build_octree(root, max_colors)
         leaves = [leaf for leaf in leaves if leaf.pixel_count > 0]
         
-        # ʹ��numpy��������ٶ�
+        # 使用numpy提高计算速度
         if leaves:
             pixel_counts = np.array([leaf.pixel_count for leaf in leaves])
             sorted_indices = np.argsort(pixel_counts)[::-1]
@@ -120,114 +120,112 @@ class Image:
 
     def analyze_color_harmony(self):
         """
-        ����ɫ�໷����ɫ�ʺ�г�ȣ�ֻ�����������ɫ�жϻ����ͷ��ѻ�����
+        分析色相环，计算色彩和谐度，只考虑前5种颜色判断互补和分裂互补
         """
         main_colors = self.main_colors[:5] if self.main_colors else []
         
         if len(main_colors) < 2:
             return 0.5
         
-        # ����ת����ɫ�ռ�
+        # 转换到HSV色彩空间
         colors_array = np.array(main_colors, dtype=np.uint8).reshape(-1, 1, 3)
         hsv_colors = cv2.cvtColor(colors_array, cv2.COLOR_BGR2HSV)[:, 0, 0]
         
-        # ������Ϣ
-        # print(f"��ɫ����: {len(main_colors)}")
-        # print(f"ɫ��ֵ: {hsv_colors}")
+        # 调试信息
+        # print(f"颜色数量: {len(main_colors)}")
+        # print(f"色相值: {hsv_colors}")
         
-        # Ԥ��������ɫ���
+        # 预处理：颜色数量
         n_colors = len(hsv_colors)
         if n_colors < 2:
             return 0.5
         
-        # ʹ��numpy����������
+        # 使用numpy计算色差
         hue_diffs = np.abs(hsv_colors[:, None] - hsv_colors[None, :])
-        # ����OpenCV HSV��ɫ�෶Χ��0-179����Ҫ��ȷ����ѭ����
+        # 注意OpenCV HSV色相范围是0-179，需要正确处理循环性
         hue_diffs = np.minimum(hue_diffs, 180 - hue_diffs)
         
-        # ֻȡ�����Ǿ��󣨱����ظ����㣩
+        # 只取上三角（避免重复计算）
         upper_triangle = np.triu(hue_diffs, k=1)
         valid_pairs = upper_triangle > 0
         
         if not np.any(valid_pairs):
             return 0.5
         
-        # ��ȡ������Ч��ɫ���ֵ
+        # 获取所有有效的色差值
         valid_diffs = upper_triangle[valid_pairs]
-        # print(f"ɫ���ֵ: {valid_diffs}")
+        # print(f"色差值: {valid_diffs}")
         
-        # ��ȡ��ɫռ����Ϣ
+        # 获取颜色占比信息
         color_percentages = self.color_percentages[:5] if self.color_percentages else []
-        # print(f"��ɫռ��: {color_percentages}")
+        # print(f"颜色占比: {color_percentages}")
         
-        # �ҵ�ռ������������ɫ������
+        # 找到占比最大的两种颜色的索引
         if len(color_percentages) >= 2:
-            # ��ȡǰ5����ɫ��ռ��
+            # 获取前5种颜色的占比
             top5_percentages = color_percentages[:5]
-            # �ҵ�ռ������������ɫ������
+            # 找到占比最大的两种颜色的索引
             top2_indices = np.argsort(top5_percentages)[-2:]
-            # print(f"ռ������������ɫ����: {top2_indices}")
+            # print(f"占比最大的两种颜色索引: {top2_indices}")
             
-            # ������������ɫ֮���ɫ���ֵ
+            # 计算这两种颜色之间的色差值
             if len(top2_indices) == 2:
                 i, j = min(top2_indices), max(top2_indices)
                 top2_diff = hue_diffs[i, j]
-                # print(f"���������ɫ��ɫ���ֵ: {top2_diff}")
+                # print(f"占比最大的两种颜色的色差值: {top2_diff}")
         
-        # ֱ�Ӽ����г�ȷ�������ʹ�ø��ӵ�����
+        # 直接计算和谐度，不使用复杂的算法
         harmony_scores_list = []
         
-        # ʹ��ƽ���ĺ�г�Ⱥ���
+        # 使用简单的和谐度函数
         for diff in valid_diffs:
-            # ��ɫ��г (0�㸽��������10�㷶Χ��)
+            # 单色和谐 (0度附近，允许10度范围)
             if 0 <= diff <= 10:
-                normalized_diff = float(abs(int(diff)) / 5.0)  # ʹ��5.0��Ϊ��ĸ��ʹ˥������
+                normalized_diff = float(abs(int(diff)) / 5.0)  # 使用5.0作为分母，使衰减更快
                 score = np.exp(-normalized_diff * normalized_diff)
                 harmony_scores_list.append(score)
-                # print(f"��ɫ��г: diff={diff}, score={score}")
             
-            # ����ɫ��г (30�㸽��������10�㷶Χ��)
+            # 类似色和谐 (30度附近，允许10度范围)
             elif 20 <= diff <= 40:
                 normalized_diff = float(abs(int(diff) - 30) / 5.0)
                 score = 0.8 * np.exp(-normalized_diff * normalized_diff)
                 harmony_scores_list.append(score)
-                # print(f"����ɫ��г: diff={diff}, score={score}")
+
             
-            # ֻ��ռ������������ɫ�жϷ��ѻ����ͻ���ɫ��г
-            # ���ѻ���ɫ��г (60�㸽��������10�㷶Χ��)
+            # 只对占比最大的两种颜色判断分裂互补和互补色和谐
+            # 分裂互补色和谐 (60度附近，允许10度范围)
             elif 50 <= diff <= 70 and len(color_percentages) >= 2:
-                # ����Ƿ���ռ������������ɫ֮��Ĳ���
-                if len(top2_indices) == 2 and abs(diff - top2_diff) < 0.1:  # ����С�ĸ������
+                # 检查是否是占比最大的两种颜色之间的差值
+                if len(top2_indices) == 2 and abs(diff - top2_diff) < 0.1:  # 使用小的阈值范围
                     normalized_diff = float(abs(int(diff) - 60) / 5.0)
                     score = 0.6 * np.exp(-normalized_diff * normalized_diff)
                     harmony_scores_list.append(score)
-                    # print(f"���ѻ���ɫ��г: diff={diff}, score={score}")
+
             
-            # ����ɫ��г (90�㸽��������10�㷶Χ��)
+            # 互补色和谐 (90度附近，允许10度范围)
             elif 80 <= diff <= 90 and len(color_percentages) >= 2:
-                # ����Ƿ���ռ������������ɫ֮��Ĳ���
-                if len(top2_indices) == 2 and abs(int(diff) - top2_diff) < 0.1:  # ����С�ĸ������
+                # 检查是否是占比最大的两种颜色之间的差值
+                if len(top2_indices) == 2 and abs(int(diff) - top2_diff) < 0.1:  # 使用小的阈值范围
                     normalized_diff = float(abs(diff - 90) / 5.0)
                     score = 0.3 * np.exp(-normalized_diff * normalized_diff)
                     harmony_scores_list.append(score)
-                    # print(f"����ɫ��г: diff={diff}, score={score}")
+
         
-        # ����ƽ����г��
-        # print(f"���к�г�ȷ���: {harmony_scores_list}")
+        # 计算平均和谐度
         avg_harmony = np.mean(harmony_scores_list) if len(harmony_scores_list) > 0 else 0.5
-        # print(f"ƽ����г��: {avg_harmony}")
+
         
         return min(1.0, max(0.0, avg_harmony))
 
     def analyze_saturation_harmony(self):
         """
-        �������ͶȺ�г�ȣ��Ż��汾��
+        分析饱和度和和谐度，优化版本
         """
         img = self.image
         
-        # ���ͼƬ̫���Ƚ�����
+        # 如果图片太大，先进行缩放
         height, width = img.shape[:2]
-        if height * width > 500000:  # 50���������Ͻ�����
+        if height * width > 500000:  # 50万像素以下进行缩放
             scale = min(1.0, np.sqrt(500000 / (height * width)))
             new_height = int(height * scale)
             new_width = int(width * scale)
@@ -236,7 +234,7 @@ class Image:
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         s = hsv[:, :, 1].flatten()
         
-        # ʹ�ø���ı�׼�����
+        # 使用更严格的标准计算
         saturation_std = np.std(s, dtype=np.float32)
         harmony_score = 1.0 / (1.0 + saturation_std / 50.0)
         
@@ -244,7 +242,7 @@ class Image:
 
     def analyze_color_temperature_harmony(self):
         """
-        ����ɫ�º�г�ȣ��Ż��汾��
+        分析色温和和谐度，优化版本
         """
         main_colors = self.main_colors if self.main_colors else []
         color_percentages = self.color_percentages if self.color_percentages else []
@@ -252,17 +250,17 @@ class Image:
         if len(main_colors) < 2:
             return 0.5
         
-        # ����ת����ɫ�ռ�
+        # 转换到HSV色彩空间
         colors_array = np.array(main_colors, dtype=np.uint8).reshape(-1, 1, 3)
         hsv_colors = cv2.cvtColor(colors_array, cv2.COLOR_BGR2HSV)[:, 0, 0]
         percentages = np.array(color_percentages)
         
-        # ������ɫ�·���
+        # 分析冷暖色分类
         warm_mask = ((hsv_colors >= 0) & (hsv_colors <= 60)) | ((hsv_colors >= 150) & (hsv_colors <= 180))
         cool_mask = (hsv_colors >= 90) & (hsv_colors <= 150)
         neutral_mask = ~(warm_mask | cool_mask)
         
-        # ����Ȩ��
+        # 计算权重
         warm_weight = np.sum(percentages[warm_mask])
         cool_weight = np.sum(percentages[cool_mask])
         neutral_weight = np.sum(percentages[neutral_mask])
@@ -301,7 +299,7 @@ class Image:
 
     def get_color_harmony_score(self):
         """
-        �ۺ�ɫ�ʺ�г�����֣�0-1��Խ��Խ��г��
+        综合色彩和谐度评分，0-1，越高越和谐
         """
         hue_harmony = self.analyze_color_harmony()
         # print("a")
@@ -311,9 +309,9 @@ class Image:
         # print("c")
         total_score = (hue_harmony * 0.2 + sat_harmony * 0.4 + temp_harmony * 0.4)
         
-        print(f"ɫ���г��: {hue_harmony:.3f}")
-        print(f"���ͶȺ�г��: {sat_harmony:.3f}")
-        print(f"ɫ�º�г��: {temp_harmony:.3f}")
-        print(f"�����г��: {total_score:.3f}")
+        print(f"色相和谐度: {hue_harmony:.3f}")
+        print(f"饱和度和谐度: {sat_harmony:.3f}")
+        print(f"色温和谐度: {temp_harmony:.3f}")
+        print(f"综合和谐度: {total_score:.3f}")
         
         return total_score
