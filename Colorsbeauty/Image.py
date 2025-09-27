@@ -1,4 +1,3 @@
-# -*- coding: gbk -*-
 import cv2
 import numpy as np
 
@@ -11,16 +10,16 @@ class Image:
         self._extract_main_colors_once()
     
     def _extract_main_colors_once(self):
-        """Ô¤´¦ÀíÖ÷É«£¬Ö»¼ÆËãÒ»´Î"""
+        """Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½"""
         if self.image is not None:
             self.main_colors, self.color_percentages = self.extract_main_colors_octree(max_colors=8, show=False)
 
     def extract_main_colors_octree(self, max_colors=8, show=False):
         """
-        Ê¹ÓÃ°Ë²æÊ÷Ëã·¨ÌáÈ¡Ö÷ÒªÑÕÉ«
-        :param max_colors: ×î´óÑÕÉ«ÊýÁ¿
-        :param show: ÊÇ·ñÏÔÊ¾Ö÷É«¿é
-        :return: Ö÷É«RGBÁÐ±í¼°ÆäÕ¼±È
+        Ê¹ï¿½Ã°Ë²ï¿½ï¿½ï¿½ï¿½ã·¨ï¿½ï¿½È¡ï¿½ï¿½Òªï¿½ï¿½É«
+        :param max_colors: ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+        :param show: ï¿½Ç·ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½É«ï¿½ï¿½
+        :return: ï¿½ï¿½É«RGBï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½
         """
         img = self.image.copy()
         
@@ -103,7 +102,7 @@ class Image:
         leaves = build_octree(root, max_colors)
         leaves = [leaf for leaf in leaves if leaf.pixel_count > 0]
         
-        # Ê¹ÓÃnumpyÅÅÐòÌá¸ßËÙ¶È
+        # Ê¹ï¿½ï¿½numpyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
         if leaves:
             pixel_counts = np.array([leaf.pixel_count for leaf in leaves])
             sorted_indices = np.argsort(pixel_counts)[::-1]
@@ -121,114 +120,114 @@ class Image:
 
     def analyze_color_harmony(self):
         """
-        »ùÓÚÉ«Ïà»··ÖÎöÉ«²ÊºÍÐ³¶È£¨Ö»¶Ô×î´óÁ½¸öÖ÷É«ÅÐ¶Ï»¥²¹ºÍ·ÖÁÑ»¥²¹£©
+        ï¿½ï¿½ï¿½ï¿½É«ï¿½à»·ï¿½ï¿½ï¿½ï¿½É«ï¿½Êºï¿½Ð³ï¿½È£ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½Ð¶Ï»ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ñ»ï¿½ï¿½ï¿½ï¿½ï¿½
         """
         main_colors = self.main_colors[:5] if self.main_colors else []
         
         if len(main_colors) < 2:
             return 0.5
         
-        # ÅúÁ¿×ª»»ÑÕÉ«¿Õ¼ä
+        # ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½É«ï¿½Õ¼ï¿½
         colors_array = np.array(main_colors, dtype=np.uint8).reshape(-1, 1, 3)
         hsv_colors = cv2.cvtColor(colors_array, cv2.COLOR_BGR2HSV)[:, 0, 0]
         
-        # µ÷ÊÔÐÅÏ¢
-        # print(f"Ö÷É«ÊýÁ¿: {len(main_colors)}")
-        # print(f"É«ÏàÖµ: {hsv_colors}")
+        # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+        # print(f"ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½: {len(main_colors)}")
+        # print(f"É«ï¿½ï¿½Öµ: {hsv_colors}")
         
-        # Ô¤¼ÆËãËùÓÐÉ«Ïà¶Ô
+        # Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½
         n_colors = len(hsv_colors)
         if n_colors < 2:
             return 0.5
         
-        # Ê¹ÓÃnumpyÏòÁ¿»¯¼ÆËã
+        # Ê¹ï¿½ï¿½numpyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         hue_diffs = np.abs(hsv_colors[:, None] - hsv_colors[None, :])
-        # ¶ÔÓÚOpenCV HSV£¬É«Ïà·¶Î§ÊÇ0-179£¬ÐèÒªÕýÈ·´¦ÀíÑ­»·ÐÔ
+        # ï¿½ï¿½ï¿½ï¿½OpenCV HSVï¿½ï¿½É«ï¿½à·¶Î§ï¿½ï¿½0-179ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½
         hue_diffs = np.minimum(hue_diffs, 180 - hue_diffs)
         
-        # Ö»È¡ÉÏÈý½Ç¾ØÕó£¨±ÜÃâÖØ¸´¼ÆËã£©
+        # Ö»È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ó£¨±ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ã£©
         upper_triangle = np.triu(hue_diffs, k=1)
         valid_pairs = upper_triangle > 0
         
         if not np.any(valid_pairs):
             return 0.5
         
-        # »ñÈ¡ËùÓÐÓÐÐ§µÄÉ«Ïà²îÖµ
+        # ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½É«ï¿½ï¿½ï¿½Öµ
         valid_diffs = upper_triangle[valid_pairs]
-        # print(f"É«Ïà²îÖµ: {valid_diffs}")
+        # print(f"É«ï¿½ï¿½ï¿½Öµ: {valid_diffs}")
         
-        # »ñÈ¡Ö÷É«Õ¼±ÈÐÅÏ¢
+        # ï¿½ï¿½È¡ï¿½ï¿½É«Õ¼ï¿½ï¿½ï¿½ï¿½Ï¢
         color_percentages = self.color_percentages[:5] if self.color_percentages else []
-        # print(f"Ö÷É«Õ¼±È: {color_percentages}")
+        # print(f"ï¿½ï¿½É«Õ¼ï¿½ï¿½: {color_percentages}")
         
-        # ÕÒµ½Õ¼±È×î´óµÄÁ½¸öÖ÷É«µÄË÷Òý
+        # ï¿½Òµï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if len(color_percentages) >= 2:
-            # »ñÈ¡Ç°5¸öÖ÷É«µÄÕ¼±È
+            # ï¿½ï¿½È¡Ç°5ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Õ¼ï¿½ï¿½
             top5_percentages = color_percentages[:5]
-            # ÕÒµ½Õ¼±È×î´óµÄÁ½¸öÖ÷É«µÄË÷Òý
+            # ï¿½Òµï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             top2_indices = np.argsort(top5_percentages)[-2:]
-            # print(f"Õ¼±È×î´óµÄÁ½¸öÖ÷É«Ë÷Òý: {top2_indices}")
+            # print(f"Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½: {top2_indices}")
             
-            # ¼ÆËãÕâÁ½¸öÖ÷É«Ö®¼äµÄÉ«Ïà²îÖµ
+            # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«Ö®ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½Öµ
             if len(top2_indices) == 2:
                 i, j = min(top2_indices), max(top2_indices)
                 top2_diff = hue_diffs[i, j]
-                # print(f"×î´óÁ½¸öÖ÷É«µÄÉ«Ïà²îÖµ: {top2_diff}")
+                # print(f"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½É«ï¿½ï¿½ï¿½Öµ: {top2_diff}")
         
-        # Ö±½Ó¼ÆËãºÍÐ³¶È·ÖÊý£¬²»Ê¹ÓÃ¸´ÔÓµÄË÷Òý
+        # Ö±ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½Ð³ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã¸ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½
         harmony_scores_list = []
         
-        # Ê¹ÓÃÆ½»¬µÄºÍÐ³¶Èº¯Êý
+        # Ê¹ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Äºï¿½Ð³ï¿½Èºï¿½ï¿½ï¿½
         for diff in valid_diffs:
-            # µ¥É«ºÍÐ³ (0¡ã¸½½ü£¬Õý¸º10¡ã·¶Î§ÄÚ)
+            # ï¿½ï¿½É«ï¿½ï¿½Ð³ (0ï¿½ã¸½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10ï¿½ã·¶Î§ï¿½ï¿½)
             if 0 <= diff <= 10:
-                normalized_diff = float(abs(int(diff)) / 5.0)  # Ê¹ÓÃ5.0×÷Îª·ÖÄ¸£¬Ê¹Ë¥¼õÊÊÖÐ
+                normalized_diff = float(abs(int(diff)) / 5.0)  # Ê¹ï¿½ï¿½5.0ï¿½ï¿½Îªï¿½ï¿½Ä¸ï¿½ï¿½Ê¹Ë¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 score = np.exp(-normalized_diff * normalized_diff)
                 harmony_scores_list.append(score)
-                # print(f"µ¥É«ºÍÐ³: diff={diff}, score={score}")
+                # print(f"ï¿½ï¿½É«ï¿½ï¿½Ð³: diff={diff}, score={score}")
             
-            # ÀàËÆÉ«ºÍÐ³ (30¡ã¸½½ü£¬Õý¸º10¡ã·¶Î§ÄÚ)
+            # ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³ (30ï¿½ã¸½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10ï¿½ã·¶Î§ï¿½ï¿½)
             elif 20 <= diff <= 40:
                 normalized_diff = float(abs(int(diff) - 30) / 5.0)
                 score = 0.8 * np.exp(-normalized_diff * normalized_diff)
                 harmony_scores_list.append(score)
-                # print(f"ÀàËÆÉ«ºÍÐ³: diff={diff}, score={score}")
+                # print(f"ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³: diff={diff}, score={score}")
             
-            # Ö»¶ÔÕ¼±È×î´óµÄÁ½¸öÖ÷É«ÅÐ¶Ï·ÖÁÑ»¥²¹ºÍ»¥²¹É«ºÍÐ³
-            # ·ÖÁÑ»¥²¹É«ºÍÐ³ (60¡ã¸½½ü£¬Õý¸º10¡ã·¶Î§ÄÚ)
+            # Ö»ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½Ð¶Ï·ï¿½ï¿½Ñ»ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³
+            # ï¿½ï¿½ï¿½Ñ»ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³ (60ï¿½ã¸½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10ï¿½ã·¶Î§ï¿½ï¿½)
             elif 50 <= diff <= 70 and len(color_percentages) >= 2:
-                # ¼ì²éÊÇ·ñÊÇÕ¼±È×î´óµÄÁ½¸öÖ÷É«Ö®¼äµÄ²îÒì
-                if len(top2_indices) == 2 and abs(diff - top2_diff) < 0.1:  # ÔÊÐíÐ¡µÄ¸¡µãÎó²î
+                # ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+                if len(top2_indices) == 2 and abs(diff - top2_diff) < 0.1:  # ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                     normalized_diff = float(abs(int(diff) - 60) / 5.0)
                     score = 0.6 * np.exp(-normalized_diff * normalized_diff)
                     harmony_scores_list.append(score)
-                    # print(f"·ÖÁÑ»¥²¹É«ºÍÐ³: diff={diff}, score={score}")
+                    # print(f"ï¿½ï¿½ï¿½Ñ»ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³: diff={diff}, score={score}")
             
-            # »¥²¹É«ºÍÐ³ (90¡ã¸½½ü£¬Õý¸º10¡ã·¶Î§ÄÚ)
+            # ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³ (90ï¿½ã¸½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10ï¿½ã·¶Î§ï¿½ï¿½)
             elif 80 <= diff <= 90 and len(color_percentages) >= 2:
-                # ¼ì²éÊÇ·ñÊÇÕ¼±È×î´óµÄÁ½¸öÖ÷É«Ö®¼äµÄ²îÒì
-                if len(top2_indices) == 2 and abs(int(diff) - top2_diff) < 0.1:  # ÔÊÐíÐ¡µÄ¸¡µãÎó²î
+                # ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+                if len(top2_indices) == 2 and abs(int(diff) - top2_diff) < 0.1:  # ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                     normalized_diff = float(abs(diff - 90) / 5.0)
                     score = 0.3 * np.exp(-normalized_diff * normalized_diff)
                     harmony_scores_list.append(score)
-                    # print(f"»¥²¹É«ºÍÐ³: diff={diff}, score={score}")
+                    # print(f"ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ð³: diff={diff}, score={score}")
         
-        # ¼ÆËãÆ½¾ùºÍÐ³¶È
-        # print(f"ËùÓÐºÍÐ³¶È·ÖÊý: {harmony_scores_list}")
+        # ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½
+        # print(f"ï¿½ï¿½ï¿½Ðºï¿½Ð³ï¿½È·ï¿½ï¿½ï¿½: {harmony_scores_list}")
         avg_harmony = np.mean(harmony_scores_list) if len(harmony_scores_list) > 0 else 0.5
-        # print(f"Æ½¾ùºÍÐ³¶È: {avg_harmony}")
+        # print(f"Æ½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½: {avg_harmony}")
         
         return min(1.0, max(0.0, avg_harmony))
 
     def analyze_saturation_harmony(self):
         """
-        ·ÖÎö±¥ºÍ¶ÈºÍÐ³¶È£¨ÓÅ»¯°æ±¾£©
+        ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶Èºï¿½Ð³ï¿½È£ï¿½ï¿½Å»ï¿½ï¿½æ±¾ï¿½ï¿½
         """
         img = self.image
         
-        # Èç¹ûÍ¼Æ¬Ì«´ó£¬ÏÈ½µ²ÉÑù
+        # ï¿½ï¿½ï¿½Í¼Æ¬Ì«ï¿½ï¿½ï¿½È½ï¿½ï¿½ï¿½ï¿½ï¿½
         height, width = img.shape[:2]
-        if height * width > 500000:  # 50ÍòÏñËØÒÔÉÏ½µ²ÉÑù
+        if height * width > 500000:  # 50ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ï¿½ï¿½
             scale = min(1.0, np.sqrt(500000 / (height * width)))
             new_height = int(height * scale)
             new_width = int(width * scale)
@@ -237,7 +236,7 @@ class Image:
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         s = hsv[:, :, 1].flatten()
         
-        # Ê¹ÓÃ¸ü¿ìµÄ±ê×¼²î¼ÆËã
+        # Ê¹ï¿½Ã¸ï¿½ï¿½ï¿½Ä±ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½
         saturation_std = np.std(s, dtype=np.float32)
         harmony_score = 1.0 / (1.0 + saturation_std / 50.0)
         
@@ -245,7 +244,7 @@ class Image:
 
     def analyze_color_temperature_harmony(self):
         """
-        ·ÖÎöÉ«ÎÂºÍÐ³¶È£¨ÓÅ»¯°æ±¾£©
+        ï¿½ï¿½ï¿½ï¿½É«ï¿½Âºï¿½Ð³ï¿½È£ï¿½ï¿½Å»ï¿½ï¿½æ±¾ï¿½ï¿½
         """
         main_colors = self.main_colors if self.main_colors else []
         color_percentages = self.color_percentages if self.color_percentages else []
@@ -253,17 +252,17 @@ class Image:
         if len(main_colors) < 2:
             return 0.5
         
-        # ÅúÁ¿×ª»»ÑÕÉ«¿Õ¼ä
+        # ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½É«ï¿½Õ¼ï¿½
         colors_array = np.array(main_colors, dtype=np.uint8).reshape(-1, 1, 3)
         hsv_colors = cv2.cvtColor(colors_array, cv2.COLOR_BGR2HSV)[:, 0, 0]
         percentages = np.array(color_percentages)
         
-        # ÏòÁ¿»¯É«ÎÂ·ÖÀà
+        # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½Â·ï¿½ï¿½ï¿½
         warm_mask = ((hsv_colors >= 0) & (hsv_colors <= 60)) | ((hsv_colors >= 150) & (hsv_colors <= 180))
         cool_mask = (hsv_colors >= 90) & (hsv_colors <= 150)
         neutral_mask = ~(warm_mask | cool_mask)
         
-        # ¼ÆËãÈ¨ÖØ
+        # ï¿½ï¿½ï¿½ï¿½È¨ï¿½ï¿½
         warm_weight = np.sum(percentages[warm_mask])
         cool_weight = np.sum(percentages[cool_mask])
         neutral_weight = np.sum(percentages[neutral_mask])
@@ -302,7 +301,7 @@ class Image:
 
     def get_color_harmony_score(self):
         """
-        ×ÛºÏÉ«²ÊºÍÐ³¶ÈÆÀ·Ö£¨0-1£¬Ô½¸ßÔ½ºÍÐ³£©
+        ï¿½Ûºï¿½É«ï¿½Êºï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½0-1ï¿½ï¿½Ô½ï¿½ï¿½Ô½ï¿½ï¿½Ð³ï¿½ï¿½
         """
         hue_harmony = self.analyze_color_harmony()
         # print("a")
@@ -312,9 +311,9 @@ class Image:
         # print("c")
         total_score = (hue_harmony * 0.2 + sat_harmony * 0.4 + temp_harmony * 0.4)
         
-        print(f"É«ÏàºÍÐ³¶È: {hue_harmony:.3f}")
-        print(f"±¥ºÍ¶ÈºÍÐ³¶È: {sat_harmony:.3f}")
-        print(f"É«ÎÂºÍÐ³¶È: {temp_harmony:.3f}")
-        print(f"×ÜÌåºÍÐ³¶È: {total_score:.3f}")
+        print(f"É«ï¿½ï¿½ï¿½Ð³ï¿½ï¿½: {hue_harmony:.3f}")
+        print(f"ï¿½ï¿½ï¿½Í¶Èºï¿½Ð³ï¿½ï¿½: {sat_harmony:.3f}")
+        print(f"É«ï¿½Âºï¿½Ð³ï¿½ï¿½: {temp_harmony:.3f}")
+        print(f"ï¿½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½: {total_score:.3f}")
         
         return total_score
