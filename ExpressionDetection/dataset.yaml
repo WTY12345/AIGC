@@ -1,0 +1,25 @@
+# Expression Detection Dataset Configuration
+# 表情识别数据集配置文件
+
+# 数据集路径
+path: D:\AIGC\Expression Detection
+
+# 训练和验证数据路径
+train: images/train
+val: images/val
+test: images/test
+
+# 类别数量
+nc: 8
+
+# 类别名称 (8种基本表情)
+names:
+  0: anger # 愤怒
+  1: contempt # 轻蔑
+  2: disgust # 厌恶
+  3: fear # 恐惧
+  4: happiness # 快乐
+  5: neutral # 中性
+  6: sadness # 悲伤
+  7: surprise # 惊讶
+
