@@ -1,4 +1,4 @@
 anger
 contempt
 disgust
-d
+fear
